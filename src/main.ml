@@ -1,12 +1,8 @@
 module C = Cmdliner
 
-let _read filename = 
-  let kw = Keyword.read filename in
-    Hashtbl.iter (fun str _ -> print_endline str) kw
-
 let scan filename =
+  let _kw = Keyword.read "keywords.txt" in
   Log.read filename
-
 
 module Command = struct
   let help =
@@ -18,7 +14,7 @@ module Command = struct
 
   let filename =
     C.Arg.(
-      value & pos 0 string "kewords.txt"
+      value & pos 0 string "keywords.txt"
       & info [] ~docv:"KEYWORDS"
           ~doc:"File containing keywords")
 

@@ -14,10 +14,9 @@
     | Track of string
 
   type line = 
-    { words: string list
+    { words: string
     ; links: link list
     }
-
 }
 
 let digit = ['0'-'9']
@@ -38,7 +37,7 @@ let any   = [^'\n']
 
 let ws    = [' ' '\t']
 let nl    = ['\n']
-let alpha = ['a'-'z' 'A'-'Z' '_' '.']
+let alpha = ['a'-'z' 'A'-'Z' '_']
 let word  = alpha alpha alpha (alpha|digit)+
 
 let hex   = ['0'-'9' 'a'-'f' 'A'-'F']
@@ -64,7 +63,7 @@ let misc    = [^ '\n' ']']+ ']'
 let prefix  = date ' ' misc ' '
 
 rule scan words links = parse
-| nl        { Some {words = List.rev words; links} } 
+| nl        { Some {words = List.rev words |> String.concat "|" ; links} } 
 | eof       { None }
 
 | hex+      { scan words links lexbuf }
@@ -83,15 +82,15 @@ rule scan words links = parse
 let scan lexbuf = scan [] [] lexbuf
 
 let link = function
-  | UUID str -> Printf.sprintf "uuid:%s" str
-  | ORef str -> Printf.sprintf "oref:%s" str
-  | Task str -> Printf.sprintf "task:%s" str
+  | UUID  str -> Printf.sprintf "uuid:%s" str
+  | ORef  str -> Printf.sprintf "oref:%s" str
+  | Task  str -> Printf.sprintf "task:%s" str
   | Track str -> Printf.sprintf "track:%s" str
 
 let rec dump lexbuf =
   match scan lexbuf with
   | Some { words; links } -> 
-      String.concat "|" words |> print_endline;
+      words |> print_endline;
       List.map link links |> String.concat "|" |> print_endline;
       dump lexbuf
   | None -> ()

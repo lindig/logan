@@ -15,7 +15,7 @@
 let ws    = [' ' '\t']
 let nl    = ['\n']
 let digit = ['0'-'9']
-let alpha = ['a'-'z' 'A'-'Z' '_' '.']
+let alpha = ['a'-'z' 'A'-'Z' '_']
 let word  = alpha alpha alpha (alpha|digit)+
 
 rule words kw = parse
@@ -27,7 +27,7 @@ rule words kw = parse
 {
   
 let read filename =
-  let kw = Hashtbl.create 128 in
+  let kw = Hashtbl.create 3000 in
   let ic = open_in filename in
   Util.finally
     (fun () ->
