@@ -16,6 +16,7 @@
   type line = 
     { words: string
     ; links: link list
+    ; date: string option
     }
 }
 
@@ -37,8 +38,10 @@ let any   = [^'\n']
 
 let ws    = [' ' '\t']
 let nl    = ['\n']
+let upper = ['A'-'Z']
 let alpha = ['a'-'z' 'A'-'Z' '_']
 let word  = alpha alpha alpha (alpha|digit)+
+          | upper upper upper (alpha|digit)*
 
 let hex   = ['0'-'9' 'a'-'f' 'A'-'F']
 let hex4  = hex hex hex hex 
@@ -62,24 +65,30 @@ let date  = (weekday   ' ')?
 let misc    = [^ '\n' ']']+ ']'
 let prefix  = date ' ' misc ' '
 
-rule scan words links = parse
-| nl        { Some {words = List.rev words |> String.concat "|" ; links} } 
+rule scan d words links = parse
+| nl        { Some 
+                { date  = d
+                ; words = List.rev words |> String.concat "|" 
+                ; links
+                } 
+            } 
 | eof       { None }
 
-| hex+      { scan words links lexbuf }
-| track     { scan words links lexbuf }
+| hex+      { scan d words links lexbuf }
+| track     { scan d words links lexbuf }
 
-| word      { let w = get lexbuf        in scan (w::words)     links  lexbuf }
-| uuid      { let u = UUID  (get lexbuf) in scan     words  (u::links) lexbuf }
-| oref      { let r = ORef  (get lexbuf) in scan     words  (r::links) lexbuf }
-| task      { let t = Task  (get lexbuf) in scan     words  (t::links) lexbuf } 
+| word      { let w = get lexbuf         in scan d (w::words)  links  lexbuf }
+| uuid      { let u = UUID  (get lexbuf) in scan d  words  (u::links) lexbuf }
+| oref      { let r = ORef  (get lexbuf) in scan d  words  (r::links) lexbuf }
+| task      { let t = Task  (get lexbuf) in scan d  words  (t::links) lexbuf } 
 
-| prefix    { scan words links lexbuf }
-| _         { scan words links lexbuf }
+| (date as date) ' ' misc
+            { scan (Some date) words links lexbuf }
+| _         { scan d           words links lexbuf }
 
 {
 
-let scan lexbuf = scan [] [] lexbuf
+let scan lexbuf = scan None [] [] lexbuf
 
 let link = function
   | UUID  str -> Printf.sprintf "uuid:%s" str
@@ -89,7 +98,7 @@ let link = function
 
 let rec dump lexbuf =
   match scan lexbuf with
-  | Some { words; links } -> 
+  | Some { date = _; words; links } -> 
       words |> print_endline;
       List.map link links |> String.concat "|" |> print_endline;
       dump lexbuf

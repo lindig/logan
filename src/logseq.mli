@@ -2,6 +2,7 @@
 type t
 
 val make: unit -> t
-val add: t => string -> unit
-val reset: t -> unit
-val mem: t -> string -> bool
+val add: t -> Log.link -> string -> t
+val reset: t -> t
+val verify: t -> string -> bool
+

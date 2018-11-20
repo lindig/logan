@@ -9,38 +9,63 @@ module S = Set.Make(A)
 let width  = 5
 let width' = width - 1
 
-type t = 
+type seq = 
   { mutable set: S.t
   ; window: string array
   }
 
-let make () =
-  { set = S.empty
-  ; window = Array.make width ""
-  }
+type t =
+  | Recording of (Log.link, seq) Hashtbl.t
+  | Verifying of seq
 
-let add t str =
-  t.set <- S.add (Array.copy t.window) t.set;
-  Array.blit t.window 1 t.window 0 width';
-  Array.set t.window width' str 
+let make () = Recording (Hashtbl.create 100)
+
+let add t id str =
+  match t with
+  | Verifying _ -> failwith "can't add in verification mode"
+  | Recording seqs ->
+    try
+      let seq = Hashtbl.find seqs id in
+      seq.set <- S.add (Array.copy seq.window) seq.set;
+      Array.blit seq.window 1 seq.window 0 width';
+      Array.set seq.window width' str;
+      Recording seqs
+    with Not_found ->
+      let seq = 
+        { set = S.empty
+        ; window = Array.make width ""
+        }
+      in
+      Array.set seq.window width' str;
+      Hashtbl.add seqs id seq;
+      Recording seqs
 
 let reset t =
-  t.set <- S.add (Array.copy t.window) t.set;
-  Array.fill t.window 0 width ""
+  match t with
+  | Verifying _ -> failwith "in verification mode"
+  | Recording seqs -> 
+      let clear _ seq =
+        seq.set <- S.add (Array.copy seq.window) seq.set in
+      Hashtbl.iter clear seqs;
+      let seq =
+        { set = 
+            Hashtbl.fold (fun _ seq set -> S.union set seq.set) seqs S.empty 
+        ; window = Array.make width ""
+        }
+      in
+        Verifying seq
 
-let mem t str =
-  Array.blit t.window 1 t.window 0 width';
-  Array.set t.window width' str;
-  S.mem t.window t.set
+let verify t str =
+  match t with
+  | Recording _ -> failwith "in recording mode"
+  | Verifying seq ->
+    Array.blit seq.window 1 seq.window 0 width';
+    Array.set seq.window width' str;
+    S.mem seq.window seq.set
 
-let dump t =
-  S.iter t.set print_endline
-
-let rec seq = function
+let rec _seq = function
   | 0 -> [0]
-  | n -> n :: seq (n-1)
-
-
+  | n -> n :: _seq (n-1)
 
 
 
