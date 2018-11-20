@@ -1,6 +1,12 @@
 module C = Cmdliner
 
-let hello name = Printf.printf "Hello, %s!\n" name
+let _read filename = 
+  let kw = Keyword.read filename in
+    Hashtbl.iter (fun str _ -> print_endline str) kw
+
+let scan filename =
+  Log.read filename
+
 
 module Command = struct
   let help =
@@ -10,20 +16,20 @@ module Command = struct
     ; `S "BUGS"
     ; `P "Check bug reports at https://github.com/lindig/hello/issues" ]
 
-  let name' =
+  let filename =
     C.Arg.(
-      value & pos 0 string "world"
-      & info [] ~docv:"NAME"
-          ~doc:"Name of person to greet; the default is 'world'.")
+      value & pos 0 string "kewords.txt"
+      & info [] ~docv:"KEYWORDS"
+          ~doc:"File containing keywords")
 
-  let hello =
-    let doc = "Say hello to someone" in
-    C.Term.(const hello $ name', info "hello" ~doc ~man:help)
+  let read =
+    let doc = "Read keywords" in
+    C.Term.(const scan $ filename, info "read" ~doc ~man:help)
 end
 
 let main () =
   try
-    match C.Term.eval Command.hello ~catch:false with
+    match C.Term.eval Command.read ~catch:false with
     | `Error _ -> exit 1
     | _ -> exit 0
   with exn ->
