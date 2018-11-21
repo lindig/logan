@@ -9,6 +9,12 @@ let with_lexbuf filename f =
     (fun () ->
       close_in ic)
 
+let with_file filename f =
+  let ic = open_in filename in
+  Util.finally
+    (fun () -> f ic)
+    (fun () -> close_in ic)
+
 let learn lexbuf =
   let model = Model.make () in
   let rec loop model =
@@ -20,29 +26,30 @@ let learn lexbuf =
   in
     loop model
 
-let verify model lexbuf =
-  let rec loop model =
+let verify model ic =
+  let rec loop ic =
+    let line   = input_line ic in
+    let lexbuf = Lexing.from_string line in
     match Log.scan lexbuf with
-    | Some Log.{links=[];words;_} -> 
-        Printf.printf "= %s\n" words; 
-        loop model
+    | Some Log.{links=[];_} -> 
+        Printf.printf "= %s\n" line; 
+        loop ic
     | Some Log.{links;words;_} ->
         let f id =
           if Model.verify model id words then
-            Printf.printf "+ %s\n" words
+            Printf.printf "+ %s\n" line
           else
-            Printf.printf "! %s\n" words
+            Printf.printf "! %s\n" line
         in
-        List.iter f links; loop model
+        List.iter f links; loop ic
     | None -> ()
   in
-    loop model
-
+    try loop ic with End_of_file -> ()
 
 let diff log1 log2 =
   let _kw   = Keyword.read "keywords.txt" in
   let model = with_lexbuf log1 learn in
-    with_lexbuf log2 (verify (Model.reset model))
+    with_file log2 (verify (Model.reset model))
 
 
 module Command = struct
