@@ -1,5 +1,5 @@
 #
-# This Makefile is not called from Opam but only used for 
+# This Makefile is not called from Opam but only used for
 # convenience during development
 #
 
@@ -8,8 +8,11 @@ SRC   = find . -not \( -path ./_build -prune \) -type f -name '*ml*'
 
 .PHONY: all install test clean
 
-all: 
-	$(DUNE) build
+all:
+	$(DUNE) build --profile=dev
+
+gprof:
+	$(DUNE) build --profile=gprof
 
 install:
 	$(DUNE) install

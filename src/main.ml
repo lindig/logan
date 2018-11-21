@@ -10,22 +10,39 @@ let with_lexbuf filename f =
       close_in ic)
 
 let learn lexbuf =
-  let model = Logseq.make () in
+  let model = Model.make () in
   let rec loop model =
     match Log.scan lexbuf with
     | Some Log.{links=[];_} -> loop model
     | Some Log.{links;words;_} -> 
-        List.fold_left (fun model id -> Logseq.add model id words) model links
-    |> loop
+        List.iter (fun id -> Model.add model id words) links; loop model
+    | None -> model
+  in
+    loop model
+
+let verify model lexbuf =
+  let rec loop model =
+    match Log.scan lexbuf with
+    | Some Log.{links=[];words;_} -> 
+        Printf.printf "= %s\n" words; 
+        loop model
+    | Some Log.{links;words;_} ->
+        let f id =
+          if Model.verify model id words then
+            Printf.printf "+ %s\n" words
+          else
+            Printf.printf "! %s\n" words
+        in
+        List.iter f links; loop model
     | None -> ()
   in
     loop model
 
 
-let diff log1 _log2 =
+let diff log1 log2 =
   let _kw   = Keyword.read "keywords.txt" in
-  let _model = with_lexbuf log1 learn in
-    ()
+  let model = with_lexbuf log1 learn in
+    with_lexbuf log2 (verify (Model.reset model))
 
 
 module Command = struct
@@ -36,15 +53,22 @@ module Command = struct
     ; `S "BUGS"
     ; `P "Check bug reports at https://github.com/lindig/hello/issues" ]
 
-  let filename =
+  let filename1 =
     C.Arg.(
-      value & pos 0 string "xensource.log"
-      & info [] ~docv:"LOGFILE"
-          ~doc:"logfile")
+      value 
+      & pos 0 string "xensource.log"
+      & info [] ~docv:"LOGFILE" ~doc:"logfile")
+
+  let filename2 =
+    C.Arg.(
+      value 
+      & pos 1 string "xensource.log"
+      & info [] ~docv:"LOGFILE" ~doc:"logfile")
+
 
   let diff =
     let doc = "Read keywords" in
-    C.Term.(const diff $ filename $ filename, info "diff" ~doc ~man:help)
+    C.Term.(const diff $ filename1 $ filename2, info "diff" ~doc ~man:help)
 end
 
 let main () =
