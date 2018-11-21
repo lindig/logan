@@ -66,13 +66,18 @@ let misc    = [^ '\n' ']']+ ']'
 let prefix  = date ' ' misc ' '
 
 rule scan d words links = parse
-| nl        { Some 
+| nl        { 
                 { date  = d
-                ; words = List.rev words |> String.concat "|" 
+                ; words = List.rev words |> String.concat " " 
                 ; links
                 } 
             } 
-| eof       { None }
+| eof       {
+                { date  = d
+                ; words = List.rev words |> String.concat " " 
+                ; links
+                } 
+            }
 
 | hex+      { scan d words links lexbuf }
 | track     { scan d words links lexbuf }
@@ -89,29 +94,5 @@ rule scan d words links = parse
 {
 
 let scan lexbuf = scan None [] [] lexbuf
-
-let link = function
-  | UUID  str -> Printf.sprintf "uuid:%s" str
-  | ORef  str -> Printf.sprintf "oref:%s" str
-  | Task  str -> Printf.sprintf "task:%s" str
-  | Track str -> Printf.sprintf "track:%s" str
-
-let rec dump lexbuf =
-  match scan lexbuf with
-  | Some { date = _; words; links } -> 
-      words |> print_endline;
-      List.map link links |> String.concat "|" |> print_endline;
-      dump lexbuf
-  | None -> ()
-
-let read filename =
-  let ic = open_in filename in
-  Util.finally
-    (fun () ->
-      let lexbuf = Lexing.from_channel ic in
-      dump lexbuf)
-    (fun () ->
-      close_in ic)
-
 
 }
