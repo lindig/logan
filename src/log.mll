@@ -18,6 +18,12 @@
     ; links: link list
     ; date: string option
     }
+
+  let link = function
+    | UUID  str -> Printf.sprintf "uuid:%s" str
+    | ORef  str -> Printf.sprintf "oref:%s" str
+    | Task  str -> Printf.sprintf "task:%s" str
+    | Track str -> Printf.sprintf "track:%s" str
 }
 
 let digit = ['0'-'9']
