@@ -1,21 +1,10 @@
 
-[![Build Status](https://travis-ci.org/lindig/hello.svg?branch=master)](https://travis-ci.org/lindig/hello)
+[![Build Status](https://travis-ci.org/lindig/logan.svg?branch=master)](https://travis-ci.org/lindig/logan)
 
-# Hello
+# Logan
 
-This is a minimal [OCaml] project that I use as a starting point for new
-projects.
-
-* Top-level Makefile for convenience: just say `make` but the actual
-  build is managed by Dune
-* Minimal command-line handling set up
-* [Travis] CI ready
-* Code is in Public Domain
-
-# Contribute
-
-If you find this useful, please contribute back by raising pull
-requests for improvements you made.
+This is an experimental log analyzer that is specific to XenServer.
+This is not yet ready for public consumption.
 
 [Travis]: https://www.travis-ci.org/
 [OCaml]:  https://www.ocaml.org/
