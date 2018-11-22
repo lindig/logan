@@ -32,7 +32,7 @@ let verify model ic =
             Printf.printf "+ %s\n" line
           else begin
             Printf.printf "! %s\n" line;
-            Printf.printf "# %s\n" words;
+            Printf.printf "# %s %s\n" (Log.link id) words;
           end
         in
         List.iter f links; loop ic

@@ -54,14 +54,9 @@ let verify t id str =
   let () = Window.add window str in
   S.mem window t.set
 
-let link = function
-  | Log.UUID  str -> Printf.sprintf "uuid:%s" str
-  | Log.ORef  str -> Printf.sprintf "oref:%s" str
-  | Log.Task  str -> Printf.sprintf "task:%s" str
-  | Log.Track str -> Printf.sprintf "track:%s" str
 
 let stats t =
   Printf.printf "set size  = %d\n" (S.cardinal t.set);
   Printf.printf "sequences = %d\n" (Hashtbl.length t.seqs);
-  (* Hashtbl.iter (fun k _ -> print_endline (link k)) t.seqs *)
+  (* Hashtbl.iter (fun k _ -> print_endline (Log.link k)) t.seqs *)
 
