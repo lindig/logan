@@ -14,7 +14,7 @@
     | Track of string
 
   type line = 
-    { words: string
+    { words: string list
     ; links: link list
     ; date: string option
     }
@@ -71,34 +71,36 @@ let date  = (weekday   ' ')?
 let misc    = [^ '\n' ']']+ ']'
 let prefix  = date ' ' misc ' '
 
-rule scan d words links = parse
-| nl        { 
-                { date  = d
-                ; words = List.rev words |> String.concat " " 
-                ; links
-                } 
-            } 
-| eof       {
-                { date  = d
-                ; words = List.rev words |> String.concat " " 
-                ; links
-                } 
-            }
+rule scan line = parse
+| nl        { line } 
+| eof       { line }
 
-| hex+      { scan d words links lexbuf }
-| track     { scan d words links lexbuf }
+| hex+      { scan line lexbuf }
+| track     { scan line lexbuf }
 
-| word      { let w = get lexbuf         in scan d (w::words)  links  lexbuf }
-| uuid      { let u = UUID  (get lexbuf) in scan d  words  (u::links) lexbuf }
-| oref      { let r = ORef  (get lexbuf) in scan d  words  (r::links) lexbuf }
-| task      { let t = Task  (get lexbuf) in scan d  words  (t::links) lexbuf } 
+| word      { let w = get lexbuf in 
+              scan { line with words = w::line.words } lexbuf }
+| uuid      { let l = UUID  (get lexbuf) in 
+              scan { line with links = l::line.links } lexbuf }
+| oref      { let l = ORef  (get lexbuf) in 
+              scan { line with links = l::line.links } lexbuf }
+| task      { let l = Task  (get lexbuf) in 
+              scan { line with links = l::line.links } lexbuf }
 
 | (date as date) ' ' misc
-            { scan (Some date) words links lexbuf }
-| _         { scan d           words links lexbuf }
+            { scan { line with date = Some date } lexbuf }
+| _         { scan line lexbuf }
 
 {
 
-let scan lexbuf = scan None [] [] lexbuf
+let empty = 
+  { words = []
+  ; links = []
+  ; date  = None
+  }
+
+let scan lexbuf = 
+  let line = scan empty lexbuf in
+  { line with words = List.rev line.words }
 
 }

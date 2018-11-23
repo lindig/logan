@@ -14,6 +14,7 @@ let learn ic =
     match Log.scan lexbuf with
     | Log.{links=[];_} -> loop model
     | Log.{links;words;_} -> 
+        let words = String.concat " " words in
         List.iter (fun id -> Model.add model id words) links; loop model
   in
     try loop model with End_of_file -> model
@@ -28,6 +29,7 @@ let verify model ic =
         loop ic
     | Log.{links;words;_} ->
         let f id =
+          let words = String.concat " " words in
           if Model.verify model id words then
             Printf.printf "+ %s\n" line
           else begin
