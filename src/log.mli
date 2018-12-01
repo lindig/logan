@@ -14,4 +14,4 @@ type line =
 
 val link : link -> string
 
-val scan : Lexing.lexbuf -> line
+val scan : ?is_kw:(string -> bool) -> Lexing.lexbuf -> line

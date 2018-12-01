@@ -1,6 +1,6 @@
 { (* vim: set ts=2 sw=2 et: *)
 
-  module L = Lexing 
+  module L = Lexing
 
   let get      = L.lexeme
 
@@ -13,7 +13,7 @@
     | Task  of string
     | Track of string
 
-  type line = 
+  type line =
     { words: string list
     ; links: link list
     ; date: string option
@@ -50,8 +50,8 @@ let word  = alpha alpha alpha (alpha|digit)+
           | upper upper upper (alpha|digit)*
 
 let hex   = ['0'-'9' 'a'-'f' 'A'-'F']
-let hex4  = hex hex hex hex 
-let hex8  = hex4 hex4 
+let hex4  = hex hex hex hex
+let hex8  = hex4 hex4
 let hex12 = hex8 hex4
 
 let trackid = hex8 hex8 hex8 hex8
@@ -62,45 +62,52 @@ let track = "trackid=" hex hex hex hex+
 let task  = ('R'|'D') ':' hex hex hex hex+
 
 let date  = (weekday   ' ')?
-             month     ' ' ' '? 
+             month     ' ' ' '?
              day       ' '
-             hour      ':'      
-             min       ':' 
+             hour      ':'
+             min       ':'
              sec frac?
 
 let misc    = [^ '\n' ']']+ ']'
 let prefix  = date ' ' misc ' '
 
-rule scan line = parse
-| nl        { line } 
+rule scan is_kw line = parse
+| nl        { line }
 | eof       { line }
 
-| hex+      { scan line lexbuf }
-| track     { scan line lexbuf }
+| hex+      { scan is_kw line lexbuf }
+| track     { scan is_kw line lexbuf }
 
-| word      { let w = get lexbuf in 
-              scan { line with words = w::line.words } lexbuf }
-| uuid      { let l = UUID  (get lexbuf) in 
-              scan { line with links = l::line.links } lexbuf }
-| oref      { let l = ORef  (get lexbuf) in 
-              scan { line with links = l::line.links } lexbuf }
-| task      { let l = Task  (get lexbuf) in 
-              scan { line with links = l::line.links } lexbuf }
+| word      { let w = get lexbuf in
+              if is_kw w then
+                scan is_kw { line with words = w::line.words } lexbuf
+              else
+                scan is_kw line lexbuf
+            }
+
+| uuid      { let l = UUID  (get lexbuf) in
+              scan is_kw { line with links = l::line.links } lexbuf }
+| oref      { let l = ORef  (get lexbuf) in
+              scan is_kw { line with links = l::line.links } lexbuf }
+| task      { let l = Task  (get lexbuf) in
+              scan is_kw { line with links = l::line.links } lexbuf }
 
 | (date as date) ' ' misc
-            { scan { line with date = Some date } lexbuf }
-| _         { scan line lexbuf }
+            { scan is_kw { line with date = Some date } lexbuf }
+| _         { scan is_kw line lexbuf }
 
 {
 
-let empty = 
+let empty =
   { words = []
   ; links = []
   ; date  = None
   }
 
-let scan lexbuf = 
-  let line = scan empty lexbuf in
+let any _ = true
+
+let scan ?(is_kw=any) lexbuf =
+  let line = scan is_kw empty lexbuf in
   { line with words = List.rev line.words }
 
 }

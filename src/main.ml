@@ -6,12 +6,13 @@ let with_file filename f =
     (fun () -> f ic)
     (fun () -> close_in ic)
 
-let learn ic =
+let learn kw ic =
   let model = Model.make () in
+  let is_kw str = Hashtbl.mem kw str in
   let rec loop model =
     let line   = input_line ic in
     let lexbuf = Lexing.from_string line in
-    match Log.scan lexbuf with
+    match Log.scan ~is_kw lexbuf with
     | Log.{links=[];_} -> loop model
     | Log.{links;words;_} -> 
         let words = String.concat " " words in
@@ -19,11 +20,12 @@ let learn ic =
   in
     try loop model with End_of_file -> model
 
-let verify model ic =
+let verify model kw ic =
+  let is_kw str = Hashtbl.mem kw str in
   let rec loop ic =
     let line   = input_line ic in
     let lexbuf = Lexing.from_string line in
-    match Log.scan lexbuf with
+    match Log.scan ~is_kw lexbuf with
     | Log.{links=[];_} -> 
         Printf.printf "= %s\n" line; 
         loop ic
@@ -42,10 +44,10 @@ let verify model ic =
     try loop ic with End_of_file -> ()
 
 let diff log1 log2 =
-  let _kw   = Keyword.read "keywords.txt" in
-  let model = with_file log1 learn in
+  let kw   = Keyword.read "keywords.txt" in
+  let model = with_file log1 (learn kw) in
     Model.stats model;
-    with_file log2 (verify (Model.reset model))
+    with_file log2 (verify (Model.reset model) kw)
 
 
 module Command = struct
