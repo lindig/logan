@@ -1,11 +1,7 @@
 
 (executable
  (name main)
- (public_name hello)
+ (public_name logan)
  (libraries cmdliner))
 
 (ocamllex keyword log)
-
-(alias
- (name    runtest)
- (action  (run ./main.exe everybody)))
