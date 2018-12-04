@@ -2,8 +2,6 @@
 
   module L = Lexing
 
-  let get      = L.lexeme
-
   exception Error of string
   let _error fmt = Printf.kprintf (fun msg -> raise (Error msg)) fmt
 
@@ -47,7 +45,7 @@ let nl    = ['\n']
 let upper = ['A'-'Z']
 let alpha = ['a'-'z' 'A'-'Z' '_']
 let word  = alpha alpha alpha (alpha|digit)+
-          | upper upper upper (alpha|digit)*
+          | upper upper (alpha|digit)*
 
 let hex   = ['0'-'9' 'a'-'f' 'A'-'F']
 let hex4  = hex hex hex hex
@@ -78,18 +76,22 @@ rule scan is_kw line = parse
 | hex+      { scan is_kw line lexbuf }
 | track     { scan is_kw line lexbuf }
 
-| word      { let w = get lexbuf in
-              if is_kw w then
+| word as w { if is_kw w then
                 scan is_kw { line with words = w::line.words } lexbuf
               else
                 scan is_kw line lexbuf
             }
-
-| uuid      { let l = UUID  (get lexbuf) in
+| '"' (word as w) '"'
+            { if is_kw w then
+                scan is_kw { line with words = w::line.words } lexbuf
+              else
+                scan is_kw line lexbuf
+            }
+| uuid as x { let l = UUID x in
               scan is_kw { line with links = l::line.links } lexbuf }
-| oref      { let l = ORef  (get lexbuf) in
+| oref as x { let l = ORef x in 
               scan is_kw { line with links = l::line.links } lexbuf }
-| task      { let l = Task  (get lexbuf) in
+| task as x { let l = Task x in
               scan is_kw { line with links = l::line.links } lexbuf }
 
 | (date as date) ' ' misc

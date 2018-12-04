@@ -56,7 +56,7 @@ module Command = struct
     ; `S "MORE HELP"
     ; `P "Use `$(mname) $(i,COMMAND) --help' for help on a single command."
     ; `S "BUGS"
-    ; `P "Check bug reports at https://github.com/lindig/hello/issues" ]
+    ; `P "Check bug reports at https://github.com/lindig/logan/issues" ]
 
   let filename1 =
     C.Arg.(
